@@ -22,7 +22,7 @@ namespace GDD3400.Project01
 
         // Tags - Set In Project Settings
         private string friendTag = "Friend";
-        private string threatTag = "Thread";
+        private string threatTag = "Threat";
         private string safeZoneTag = "SafeZone";
 
 
