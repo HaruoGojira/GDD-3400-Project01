@@ -2,9 +2,21 @@ using UnityEngine;
 
 namespace GDD3400.Project01
 {
+    /// <summary>
+    /// Set up for the dog script
+    /// </summary>
     public class Dog : MonoBehaviour
     {
-        
+        //set up for an enum
+        public enum DogState
+        {
+            Patrolling,
+            Chasing,
+            Sneaking
+        }
+
+
+        // variables to set up the dog booleans
         private bool _isActive = true;
         public bool IsActive 
         {
