@@ -15,6 +15,9 @@ namespace GDD3400.Project01
             Sneaking
         }
 
+        public DogState currentState;
+        //sets up rigidbody
+        private Rigidbody _rb;
 
         // variables to set up the dog booleans
         private bool _isActive = true;
@@ -27,6 +30,7 @@ namespace GDD3400.Project01
         // Required Variables (Do not edit!)
         private float _maxSpeed = 5f;
         private float _sightRadius = 7.5f;
+        
 
         // Layers - Set In Project Settings
         public LayerMask _targetsLayer;
@@ -37,6 +41,10 @@ namespace GDD3400.Project01
         private string threatTag = "Threat";
         private string safeZoneTag = "SafeZone";
 
+        //creating the movement settings for the dog
+        private Vector3 _moveDirection;
+        private Vector3 _target;
+        private float _targetspeed;
 
 
         public void Awake()
