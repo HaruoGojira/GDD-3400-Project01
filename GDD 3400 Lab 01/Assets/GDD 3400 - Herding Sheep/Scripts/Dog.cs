@@ -14,7 +14,6 @@ namespace GDD3400.Project01
             Friend,
             Threat
         }
-
         public DogState currentState;
 
         //sets up rigidbody
@@ -32,7 +31,6 @@ namespace GDD3400.Project01
         private float _maxSpeed = 5f;
         private float _sightRadius = 7.5f;
         
-
         // Layers - Set In Project Settings
         public LayerMask _targetsLayer;
         public LayerMask _obstaclesLayer;
