@@ -10,12 +10,13 @@ namespace GDD3400.Project01
         //set up for an enum
         public enum DogState
         {
-            Patrolling,
-            Chasing,
-            Sneaking
+            Sneak,
+            Friend,
+            Threat
         }
 
         public DogState currentState;
+
         //sets up rigidbody
         private Rigidbody _rb;
 
@@ -45,13 +46,16 @@ namespace GDD3400.Project01
         private Vector3 _moveDirection;
         private Vector3 _target;
         private float _targetspeed;
-
+        private float _speed;
 
         public void Awake()
         {
             // Find the layers in the project settings
             _targetsLayer = LayerMask.GetMask("Targets");
             _obstaclesLayer = LayerMask.GetMask("Obstacles");
+
+            // Get the rigidbody component
+            _rb = GetComponent<Rigidbody>();
 
         }
 
@@ -63,6 +67,7 @@ namespace GDD3400.Project01
             DecisionMaking();
         }
 
+        #region Perception and Decision Making
         private void Perception()
         {
             
@@ -72,6 +77,7 @@ namespace GDD3400.Project01
         {
 
         }
+        #endregion
 
         /// <summary>
         /// Make sure to use FixedUpdate for movement with physics based Rigidbody
