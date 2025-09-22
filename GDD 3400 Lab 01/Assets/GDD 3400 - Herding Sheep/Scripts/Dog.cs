@@ -18,6 +18,7 @@ namespace GDD3400.Project01
 
         //sets up rigidbody
         private Rigidbody _rb;
+        private Level _level;
 
         // variables to set up the dog booleans
         private bool _isActive = true;
@@ -57,6 +58,17 @@ namespace GDD3400.Project01
 
         }
 
+        //Spawn the dog in the level
+        public void Initialize(Level level, int index)
+        {
+            this.name = $"Dog {index}";
+
+            this._level = level;
+
+            //Spawns the dog within the safe zone
+            
+        }
+
         private void Update()
         {
             if (!_isActive) return;
@@ -84,7 +96,14 @@ namespace GDD3400.Project01
         private void FixedUpdate()
         {
             if (!_isActive) return;
-            
+
+            // Move the dog based on the current state and target
+            Vector3 _movement = _moveDirection.normalized * _maxSpeed * Time.fixedDeltaTime;
+            //this keeps the dog on the ground
+            _movement.y = 0;
+
+            _rb.MovePosition(_rb.position + _movement);
+
         }
     }
 }
