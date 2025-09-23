@@ -43,9 +43,7 @@ namespace GDD3400.Project01
 
         //creating the movement settings for the dog
         private Vector3 _moveDirection;
-        private Vector3 _target;
-        private float _targetspeed;
-        private float _speed;
+        private float _initialSpeed;
 
         public void Awake()
         {
@@ -56,17 +54,6 @@ namespace GDD3400.Project01
             // Get the rigidbody component
             _rb = GetComponent<Rigidbody>();
 
-        }
-
-        //Spawn the dog in the level
-        public void Initialize(Level level, int index)
-        {
-            this.name = $"Dog {index}";
-
-            this._level = level;
-
-            //Spawns the dog within the safe zone
-            
         }
 
         private void Update()
@@ -85,6 +72,9 @@ namespace GDD3400.Project01
 
         private void DecisionMaking()
         {
+            // Find the closest sheep in the scene
+
+
 
         }
         #endregion
@@ -96,13 +86,23 @@ namespace GDD3400.Project01
         private void FixedUpdate()
         {
             if (!_isActive) return;
-
-            // Move the dog based on the current state and target
-            Vector3 _movement = _moveDirection.normalized * _maxSpeed * Time.fixedDeltaTime;
-            //this keeps the dog on the ground
+           
+            // Move the dog based on the current state
+            Vector3 _movement = _moveDirection * _initialSpeed * Time.fixedDeltaTime;
+            _rb.MovePosition(_rb.position + _movement);
+            //make sure dog stays on the ground
             _movement.y = 0;
 
-            _rb.MovePosition(_rb.position + _movement);
+            // Rotate the dog to face the movement direction
+            if (_movement != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(_moveDirection);
+                _rb.rotation = Quaternion.RotateTowards(_rb.rotation, targetRotation, 360 * Time.fixedDeltaTime);
+            }
+
+
+
+
 
         }
     }
