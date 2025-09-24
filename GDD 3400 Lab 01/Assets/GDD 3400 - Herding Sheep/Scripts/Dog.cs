@@ -40,6 +40,15 @@ namespace GDD3400.Project01
         private Vector3 _moveDirection;
         private float _initialSpeed;
 
+        //This will set up the states for the dog
+        enum DogState
+        {
+            Friend,
+            Sneak,
+            Threat
+        }
+        private DogState _currentState;
+
         public void Awake()
         {
             // Find the layers in the project settings
@@ -119,6 +128,19 @@ namespace GDD3400.Project01
                     //move at half speed when wandering
                     _initialSpeed = _maxSpeed / 2; 
                 }
+            }
+
+            //Switch cases for the dog states
+            switch(_currentState)
+            {
+                case DogState.Friend:
+                    break;
+                case DogState.Sneak:
+                    break;
+                case DogState.Threat:
+                    break;
+                default:
+                    break;
             }
 
 
