@@ -15,6 +15,10 @@ namespace GDD3400.Project01
         private GameObject[] _sheepList;
         private Sheep _currentTarget;
 
+        //set up the safe zone
+        private bool _inSafeZone = false;
+        public bool InSafeZone => _inSafeZone;
+
         // variables to set up the dog booleans
         private bool _isActive = true;
         public bool IsActive 
@@ -60,6 +64,9 @@ namespace GDD3400.Project01
 
         }
 
+        /// <summary>
+        /// Update is called once per frame
+        /// </summary>
         private void Update()
         {
             if (!_isActive) return;
@@ -75,69 +82,50 @@ namespace GDD3400.Project01
         private void Perception()
         {
             // Check for nearby sheep within sight radius
-            Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, _sightRadius, _targetsLayer);
-            foreach (Collider target in targetsInViewRadius)
+            Collider[] _targetsInViewRadius = Physics.OverlapSphere(transform.position, _sightRadius, _targetsLayer);
+            foreach (Collider _target in _targetsInViewRadius)
             {
                 // Check if the target is a sheep
-                if (target.CompareTag(friendTag))
+                if (_target.CompareTag("Friend"))
                 {
                     // Check if there is a clear line of sight to the sheep
-                    Vector3 directionToTarget = (target.transform.position - transform.position).normalized;
-                    float distanceToTarget = Vector3.Distance(transform.position, target.transform.position);
-                    if (!Physics.Raycast(transform.position, directionToTarget, distanceToTarget, _obstaclesLayer))
+                    Vector3 _directionToTarget = (_target.transform.position - transform.position).normalized;
+                    float _distanceToTarget = Vector3.Distance(transform.position, _target.transform.position);
+                    if (!Physics.Raycast(transform.position, _directionToTarget, _distanceToTarget, _obstaclesLayer))
                     {
                         // The dog can see the sheep
-                        Sheep sheep = target.GetComponent<Sheep>();
+                        Sheep sheep = _target.GetComponent<Sheep>();
                         if (sheep != null && !sheep.InSafeZone)
                         {
+                            //this stops the loop once sheep is found
                             _currentTarget = sheep;
-                            break; // Exit the loop once a visible sheep is found
+                            break; 
                         }
                     }
                 }
             }
-
+            
 
         }
 
         /// <summary>
-        /// Determines the dog's behavior based on the presence and proximity of sheep,  and updates its movement
-        /// direction and speed accordingly.
+        /// Determines the dog's behavior based on the presence and proximity of sheep, and updates its movement
         /// </summary>
-        /// <remarks>This method prioritizes targeting the closest sheep that is not in a safe zone.  If
-        /// no valid target is found, the dog will wander in a random direction at reduced speed.</remarks>
         private void DecisionMaking()
         {
-            //This if statement gets the dog to move towards the sheep if it is not in a safe zone
-            if (_currentTarget != null)
-            {
-                //increases initial speed to max speed when chasing sheep towards safe zone
-                Vector3 _currentDirection = (_currentTarget.transform.position - transform.position).normalized;
-                _moveDirection = _currentDirection;
-                _initialSpeed = _maxSpeed;
-            }
-            //else the dog will just wander around
-            else
-            {
-               if (_moveDirection == Vector3.zero)
-                {
-                    //pick a random direction to move in
-                    //-45, 45 degrees so that he doesn't go backwards
-                    float randomAngle = Random.Range(-45f, 45f);
-                    _moveDirection = new Vector3(Mathf.Cos(randomAngle * Mathf.Deg2Rad), 0, Mathf.Sin(randomAngle * Mathf.Deg2Rad)).normalized;
-                    //move at half speed when wandering
-                    _initialSpeed = _maxSpeed / 2; 
-                }
-            }
+            Threat();
 
             //Switch cases for the dog states
-            switch(_currentState)
+            switch (_currentState)
             {
                 case DogState.Friend:
+                    Friend();
                     break;
                 case DogState.Sneak:
+                    Sneak();
                     break;
                 case DogState.Threat:
+                    Threat();
                     break;
                 default:
                     break;
@@ -146,6 +134,82 @@ namespace GDD3400.Project01
 
         }
         #endregion
+
+        /// <summary>
+        /// This is when the dog is in the friend state
+        /// </summary>
+        public void Friend()
+        {
+            //this will make the sheep go towards the dog
+            if (_currentState != null)
+            {
+                
+               
+
+            }
+            else
+            {
+                Wander();
+            }
+        }
+
+        /// <summary>
+        /// This is when the dog is in the sneak state
+        /// </summary>
+        public void Sneak()
+        {
+            //this will make the dog invisible to the sheep
+            if (_currentState != null)
+            {
+                //Dog moves slower when invisible
+                _initialSpeed = _maxSpeed;
+                
+            }
+            else
+            {
+                Wander();
+            }
+            
+        }
+
+        /// <summary>
+        /// This is when the dog is in the threat state
+        /// </summary>
+        public void Threat()
+        {
+            //This if statement gets the dog to move towards the sheep if it is not in a safe zone
+            if (_currentTarget != null)
+            {
+                //increases initial speed to max speed when chasing sheep towards safe zone
+                Vector3 _currentDirection = (_currentTarget.transform.position - transform.position).normalized;
+                _moveDirection = _currentDirection;
+                _initialSpeed = _maxSpeed;
+
+               
+            }
+            //else the dog will just wander around
+            else
+            {
+                Wander();
+            }
+
+        }
+
+        /// <summary>
+        /// Default to have the dog wander and look for sheep
+        /// </summary>
+        public void Wander ()
+        {
+            //Keeps the dog from spazzing when walking
+            if (_moveDirection == Vector3.zero)
+            {
+                //pick a random direction to move in
+                //Random angle so the dog doesn't just go in a straight line
+                float randomAngle = Random.Range(-20f, 20f);
+                _moveDirection = new Vector3(Mathf.Cos(randomAngle * Mathf.Deg2Rad), 0, Mathf.Sin(randomAngle * Mathf.Deg2Rad)).normalized;
+                _initialSpeed = _maxSpeed;
+            }
+        }
 
         /// <summary>
         /// Make sure to use FixedUpdate for movement with physics based Rigidbody
@@ -173,4 +237,15 @@ namespace GDD3400.Project01
 }
 
 ///Psuedocode for dog script
-///
+/// What does the dog need to do?
+/// What I aim for is to first have the dog spawn and head in a random direction.
+/// This would give it a realistic start instead of just going towards the closest sheep immediately.
+/// In the fixed update function, I set up movement that updates the dog's position based on its move direction and speed
+/// based the FixedDeltaTime.
+/// To make sure the dog doesn't fly off, I set the y value of movement to 0 and made sure to update his position with the rigidbody.
+/// I also set up rotation so that the dog faces the direction it is moving.
+/// I then focused on the Perception and Decision Making functions
+/// Perception: This is where the dog will find the sheep within its sight radius using a physics overlap sphere similar to the sheep's.
+/// I also set up a raycast so if I do add obstacles, the dog won't see through them.
+/// 
+/// 
