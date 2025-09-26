@@ -237,14 +237,22 @@ namespace GDD3400.Project01
             //This if statement gets the dog to move towards the sheep if it is not in a safe zone
             if (_sheepTarget != null)
             {
-                // Dog stays a bit behind the sheep to herd them
-                Vector3 _stayBehind = _sheepTarget.transform.position - _sheepTarget.transform.forward * 1.5f;
+                // Dog finds the safe zone
+                GameObject _safezone = GameObject.FindGameObjectWithTag(safeZoneTag);
 
-                //increases initial speed to max speed and applies the movement
-                Vector3 _directionBehind = (_stayBehind - transform.position).normalized;
-                _moveDirection = _directionBehind;
-                _initialSpeed = _maxSpeed - 1.5f;
+                if (_safezone != null)
+                {
+                    // Makes the sheep move towards the safe zone
+                    Vector3 _directionToSafe = (_safezone.transform.position - _sheepTarget.transform.position).normalized;
 
+                    // Dog stays a bit behind the sheep to herd them
+                    Vector3 _stayBehind = _sheepTarget.transform.position - _directionToSafe * 1.5f;
+
+                    //increases initial speed to max speed and applies the movement
+                    Vector3 _directionBehind = (_stayBehind - transform.position).normalized;
+                    _moveDirection = _directionBehind;
+                    _initialSpeed = _maxSpeed - 1.5f;
+                }
             }
             //else the dog will just wander around
             else
