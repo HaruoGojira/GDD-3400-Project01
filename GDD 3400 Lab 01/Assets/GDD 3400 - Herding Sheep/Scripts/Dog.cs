@@ -52,6 +52,7 @@ namespace GDD3400.Project01
         }
         private DogState _currentState;
 
+        
         public void Awake()
         {
             // Find the layers in the project settings
@@ -63,6 +64,23 @@ namespace GDD3400.Project01
 
         }
 
+        public void Initialize(Level level, int index)
+        {
+            this.name = $"Dog {index}";
+
+            this._level = level;
+
+        }
+
+        public void Start()
+        {
+            // For sheep that are already in the scene, they will not have a level assigned, so we need to assign it here
+            if (_level == null)
+            {
+                _level = Level.Instance;
+            }
+        }
+       
         /// <summary>
         /// Update is called once per frame
         /// </summary>
@@ -107,6 +125,7 @@ namespace GDD3400.Project01
 
         }
 
+        #region Decision Making
         /// <summary>
         /// Determines the dog's behavior based on the presence and proximity of sheep, and updates its movement
         /// </summary>
@@ -115,16 +134,17 @@ namespace GDD3400.Project01
             // Variables to help with the decision making
            if (_sheepTarget != null)
             {
+                // Calculates distance and decides the state
                 float _distanceToSheep = Vector3.Distance(transform.position, _sheepTarget.transform.position);
-                if (_distanceToSheep <= 2f)
+                if (_distanceToSheep <= 1.5f)
                 {
                     _currentState = DogState.Friend;
                 }
-                else if (_distanceToSheep <= 5f)
+                else if (_distanceToSheep <= 6f)
                 {
                     _currentState = DogState.Threat;
                 }
-                else
+                else if (_distanceToSheep == _sightRadius)
                 {
                     _currentState = DogState.Sneak;
                 }
@@ -134,22 +154,24 @@ namespace GDD3400.Project01
                 Search();
             }
 
-                // Determine the current state based on the presence of sheep
-                switch (_currentState)
-                {
-                    case DogState.Friend:
-                        Friend();
-                        break;
-                    case DogState.Sneak:
-                        Sneak();
-                        break;
-                    case DogState.Threat:
-                        Threat();
-                        break;
-                    default:
-                        Search();
-                        break;
-                }
+            //Switch statement to determine the dog state
+            switch (_currentState)
+            {
+                case DogState.Friend:
+                    Friend();
+                    break;
+                case DogState.Sneak:
+                    Sneak();
+                    break;
+                case DogState.Threat:
+                    Threat();
+                    break;
+                default:
+                    Search();
+                    break;
+            }
+
+
 
         }
         #endregion
@@ -159,15 +181,29 @@ namespace GDD3400.Project01
         /// </summary>
         public void Friend()
         {
-            //this will make the sheep go towards the dog
+            //set the dog tag to friend
+            gameObject.tag = friendTag;
+            
             if (_sheepTarget != null)
             {
-                //The sheep will move towards the dog and then to the safe zone
-                
-            }
-            else
-            {
-                Search();
+                // Dog moves towards safe zone once sheep are close enough
+                GameObject _safeZone = GameObject.FindGameObjectWithTag(safeZoneTag);
+                if (_safeZone != null)
+                {
+                    // Calculate distance to safe zone
+                    float _distanceToSafeZone = Vector3.Distance(transform.position, _safeZone.transform.position);
+                    if (_distanceToSafeZone == 0.1f)
+                    {
+                        Vector3 _directionToSafe = (_safeZone.transform.position - transform.position).normalized;
+                        _moveDirection = _directionToSafe;
+                        _initialSpeed = _maxSpeed;
+                    }
+                    else
+                    {
+                        Search();
+                    }
+                }
+
             }
         }
 
@@ -179,8 +215,10 @@ namespace GDD3400.Project01
             //this will make the dog invisible to the sheep
             if (_sheepTarget != null)
             {
-                //The sheep can't see the dog so it will go around it
-                
+                 //dog moves to sheep
+                 Vector3 _directionToSheep = (_sheepTarget.transform.position - transform.position).normalized;
+                 _moveDirection = _directionToSheep;
+                 _initialSpeed = _maxSpeed - 2f;
             }
             else
             {
@@ -194,13 +232,18 @@ namespace GDD3400.Project01
         /// </summary>
         public void Threat()
         {
+            //set the dog tag to threat
+            gameObject.tag = threatTag;
             //This if statement gets the dog to move towards the sheep if it is not in a safe zone
             if (_sheepTarget != null)
             {
-                //increases initial speed to max speed when chasing sheep towards safe zone
-                Vector3 _currentDirection = (_sheepTarget.transform.position - transform.position).normalized;
-                _moveDirection = _currentDirection;
-                _initialSpeed = _maxSpeed - 2.5f;
+                // Dog stays a bit behind the sheep to herd them
+                Vector3 _stayBehind = _sheepTarget.transform.position - _sheepTarget.transform.forward * 1.5f;
+
+                //increases initial speed to max speed and applies the movement
+                Vector3 _directionBehind = (_stayBehind - transform.position).normalized;
+                _moveDirection = _directionBehind;
+                _initialSpeed = _maxSpeed - 1.5f;
 
             }
             //else the dog will just wander around
@@ -220,25 +263,29 @@ namespace GDD3400.Project01
             if (_moveDirection == Vector3.zero)
             {
                 //pick a random direction to move in
-                //Random angle so the dog doesn't just go in a straight line
-                float randomAngle = Random.Range(-20f, 20f);
+                float randomAngle = Random.Range(0f, 360);
                 _moveDirection = new Vector3(Mathf.Cos(randomAngle * Mathf.Deg2Rad), 0, Mathf.Sin(randomAngle * Mathf.Deg2Rad)).normalized;
                 _initialSpeed = _maxSpeed;
                 
             }
         }
+        #endregion
 
         /// <summary>
-        /// Prevents the dog from getting stuck on the walls
+        /// Keeps dog from going into the walls
         /// </summary>
-        /// <param name="other"></param>
-        private void OnTriggerEnter(Collider other)
+        /// <param name="collision"></param>
+        private void OnCollisionEnter(Collision collision)
         {
-            //makes sure dog doesn't get stuck in walls
-            if (other.CompareTag("Wall"))
+            // Check if the dog has entered the safe zone
+            if (collision.gameObject.CompareTag("Wall"))
             {
-                // Reverse direction upon hitting an obstacle
+                //turns the dog around in random direction
                 _moveDirection = -_moveDirection;
+
+                //fix the rotation after it reverses
+                Quaternion _targetRotation = Quaternion.LookRotation(_moveDirection);
+                _rb.rotation = Quaternion.RotateTowards(_rb.rotation, _targetRotation, 360 * Time.fixedDeltaTime);
             }
         }
 
@@ -249,10 +296,11 @@ namespace GDD3400.Project01
         private void FixedUpdate()
         {
             if (!_isActive) return;
-           
-            // Sets up movement and moves the dog based on the current state
+
+            // Sets up movement for the dog based on FixedDeltaTime
             Vector3 _movement = _moveDirection * _initialSpeed * Time.fixedDeltaTime;
             _rb.MovePosition(_rb.position + _movement);
+            _movement.y = 0;
 
             // Rotate the dog to face the movement direction
             if (_movement != Vector3.zero)
@@ -264,17 +312,53 @@ namespace GDD3400.Project01
     }
 }
 
-///Psuedocode for dog script/Also my thought process
+///Psuedocode for dog script/Also my thought process:
+///
 /// What does the dog need to do?
-/// What I aim for is to first have the dog spawn and head in a random direction.
-/// This would give it a realistic start instead of just going towards the closest sheep immediately.
-/// In the fixed update function, I set up movement that updates the dog's position based on its move direction and speed
-/// based the FixedDeltaTime.
-/// I also set up rotation so that the dog faces the direction it is moving and made sure it keeps moving
-/// I then focused on the Perception and Decision Making functions
-/// Perception: This is where the dog will find the sheep within its sight radius using a physics overlap sphere similar to the sheep's.
-/// I also set up a raycast so if I do add obstacles, the dog won't see through them.
-/// The tricky part was setting up the three states for the dog
-/// The threat state was the easier one since i had to where once the dog sees a sheep, it slows down and tries to herd or push them to the safe zone
-/// The friend state I tried to approach by 
+/// The way I approached this was to first try and see what the sheep and level scripts were doing.
+/// Now I didn't look at every single thing they were doing, but I did get the main idea of how they were handled.
+/// The sheep script was what I used to implement some of the dog script.
+/// I borrwed some of the set up variables and Even labeled the sheep object as _sheepTarget to access the script for the dog
+/// I even borrowed the Initialize method and made my own variables for the dog.
+/// I created the dog states as enums for my future functions and made my own variables similar to the sheeps
 /// 
+/// How does the dog move?
+/// So I first focused on the FixedUpdate method and stuck with making a movement variable that moves the dog based on FixedDeltaTime.
+/// Thankfully Visual Studio provided a solution that helped with both securing the rigidbody component and rotation of the dog.
+/// I created a collision method and messed with the playground boundries to make sure the dog doesn't get stuck on the walls
+/// 
+/// How does the dog states work?
+/// This was by far the hardest challenge for me. To make it easier for myself, I seperated the perception and decision into regions to find them easier
+/// The perception method was provided by the Visual Studio solution and I modified it to fit my needs.
+/// Considering both methods were in the update method, it made it easier to provide the code
+/// The decision making I used a switch statement and decided to make it switch based on distance
+/// If the dog was farther, it would sneak, to the sheep, if it was closer, it would threaten the sheep, and if it was very close, it would friend the sheep
+/// Using the tags was the easiest way to keep track of them
+/// I made each state its own method to keep things organized
+/// I even had a default search method that keeps the dog wandering around if no sheep are found.
+/// The friend method I tried to manage by having the dog turn on the friend tag and make it move towards the safe zone
+/// The sneak method I tried to have the dog move slower for a sneaking effect
+/// The threat method I had the dog move towards the sheep but stay a bit behind to simulate herding.
+/// The threat still needed work, because it would still get too close even after I tried to fix it.
+/// The search method was the default method that would make sure the dog didn't stop moving
+/// 
+/// 
+/// 
+/// 
+/// 
+/// Sources: Some of the code was provided by Visual Studio suggestions (Perception method and FixedUpdate method)
+///          Some was inspired by the sheep script (Initialize method and some variables)
+///          GDT Solutions: https://gamedevtraum.com/en/game-and-app-development-with-unity/unity-tutorials-and-solutions/unity-tutorial-make-objects-chase-follow-in-unity-smooth-lag-free-movement/
+///          Stack Overflow: https://stackoverflow.com/questions/59022682/using-unity-scripting-enemy-ai-follow-player
+///          ChatGPT: Used to help with creating the dog states since this was the main challenge.
+///          (Prompts: in unity how can I approach making an object invisible to another npc type object, 
+///          It will act like a sneak mode and I already have a sneak function set up, so how can i approach this.
+///          (in unity in c#, what are some ways i can have an object move towards another object. 
+///          And once that happens, both go to a certain area or point in a script. I also want to make it stay some distance behind
+///          object but still move towards them, and also make sure they don't run into each other.)
+///          
+///          
+/// 
+
+
+
