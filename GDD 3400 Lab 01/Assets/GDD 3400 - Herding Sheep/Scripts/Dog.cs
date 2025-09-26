@@ -14,7 +14,7 @@ namespace GDD3400.Project01
         //set up the sheep as targets
         private Sheep _sheepTarget;
 
-        //set up the safe zone
+        //set up the safe zone booleans like the sheep
         private bool _inSafeZone = false;
         public bool InSafeZone => _inSafeZone;
 
@@ -52,7 +52,9 @@ namespace GDD3400.Project01
         }
         private DogState _currentState;
 
-        
+        /// <summary>
+        /// This method is called when the script instance is being loaded
+        /// </summary>
         public void Awake()
         {
             // Find the layers in the project settings
@@ -64,6 +66,11 @@ namespace GDD3400.Project01
 
         }
 
+        /// <summary>
+        /// This method initializes the dog with a reference to the level and an index for naming
+        /// </summary>
+        /// <param name="level"></param>
+        /// <param name="index"></param>
         public void Initialize(Level level, int index)
         {
             this.name = $"Dog {index}";
@@ -72,9 +79,12 @@ namespace GDD3400.Project01
 
         }
 
+        /// <summary>
+        /// Start is called before the first frame update
+        /// </summary>
         public void Start()
         {
-            // For sheep that are already in the scene, they will not have a level assigned, so we need to assign it here
+            // helps to assign the level for the dog
             if (_level == null)
             {
                 _level = Level.Instance;
@@ -103,7 +113,7 @@ namespace GDD3400.Project01
             foreach (Collider _target in _targetsInViewRadius)
             {
                 // Check if the target is a sheep
-                if (_target.CompareTag("Friend"))
+                if (_target.CompareTag(friendTag))
                 {
                     // Check if there is a clear line of sight to the sheep
                     Vector3 _directionToTarget = (_target.transform.position - transform.position).normalized;
@@ -122,7 +132,6 @@ namespace GDD3400.Project01
                 }
             }
             
-
         }
 
         #region Decision Making
@@ -171,8 +180,6 @@ namespace GDD3400.Project01
                     break;
             }
 
-
-
         }
         #endregion
 
@@ -192,12 +199,14 @@ namespace GDD3400.Project01
                 {
                     // Calculate distance to safe zone
                     float _distanceToSafeZone = Vector3.Distance(transform.position, _safeZone.transform.position);
+                    // Move towards safe zone
                     if (_distanceToSafeZone == 0.1f)
                     {
                         Vector3 _directionToSafe = (_safeZone.transform.position - transform.position).normalized;
                         _moveDirection = _directionToSafe;
                         _initialSpeed = _maxSpeed;
                     }
+                    //keeps dog from getting stuck
                     else
                     {
                         Search();
@@ -215,7 +224,7 @@ namespace GDD3400.Project01
             //this will make the dog invisible to the sheep
             if (_sheepTarget != null)
             {
-                 //dog moves to sheep
+                 //dog moves to sheep slowly
                  Vector3 _directionToSheep = (_sheepTarget.transform.position - transform.position).normalized;
                  _moveDirection = _directionToSheep;
                  _initialSpeed = _maxSpeed - 2f;
@@ -234,7 +243,7 @@ namespace GDD3400.Project01
         {
             //set the dog tag to threat
             gameObject.tag = threatTag;
-            //This if statement gets the dog to move towards the sheep if it is not in a safe zone
+            //Dog begins to herd the sheep
             if (_sheepTarget != null)
             {
                 // Dog finds the safe zone
@@ -245,13 +254,13 @@ namespace GDD3400.Project01
                     // Makes the sheep move towards the safe zone
                     Vector3 _directionToSafe = (_safezone.transform.position - _sheepTarget.transform.position).normalized;
 
-                    // Dog stays a bit behind the sheep to herd them
-                    Vector3 _stayBehind = _sheepTarget.transform.position - _directionToSafe * 1.5f;
+                    // Dog stays behind the sheep to herd them
+                    Vector3 _stayBehind = _sheepTarget.transform.position - _directionToSafe * 3f;
 
-                    //increases initial speed to max speed and applies the movement
+                    //adjust initial speed to max speed and applies the movement
                     Vector3 _directionBehind = (_stayBehind - transform.position).normalized;
                     _moveDirection = _directionBehind;
-                    _initialSpeed = _maxSpeed - 1.5f;
+                    _initialSpeed = _maxSpeed - 2.4f;
                 }
             }
             //else the dog will just wander around
@@ -288,7 +297,7 @@ namespace GDD3400.Project01
             // Check if the dog has entered the safe zone
             if (collision.gameObject.CompareTag("Wall"))
             {
-                //turns the dog around in random direction
+                //turns the dog around
                 _moveDirection = -_moveDirection;
 
                 //fix the rotation after it reverses
@@ -359,11 +368,11 @@ namespace GDD3400.Project01
 ///          GDT Solutions: https://gamedevtraum.com/en/game-and-app-development-with-unity/unity-tutorials-and-solutions/unity-tutorial-make-objects-chase-follow-in-unity-smooth-lag-free-movement/
 ///          Stack Overflow: https://stackoverflow.com/questions/59022682/using-unity-scripting-enemy-ai-follow-player
 ///          ChatGPT: Used to help with creating the dog states since this was the main challenge.
-///          (Prompts: in unity how can I approach making an object invisible to another npc type object, 
-///          It will act like a sneak mode and I already have a sneak function set up, so how can i approach this.
-///          (in unity in c#, what are some ways i can have an object move towards another object. 
+///          (Prompts: "in unity how can I approach making an object invisible to another npc type object, 
+///          It will act like a sneak mode and I already have a sneak function set up, so how can i approach this.")
+///          ("in unity in c#, what are some ways i can have an object move towards another object. 
 ///          And once that happens, both go to a certain area or point in a script. I also want to make it stay some distance behind
-///          object but still move towards them, and also make sure they don't run into each other.)
+///          object but still move towards them, and also make sure they don't run into each other.")
 ///          
 ///          
 /// 
